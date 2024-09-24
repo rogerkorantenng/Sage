@@ -1,0 +1,52 @@
+import gradio as grimport os
+import keras
+import keras_nlp
+
+import os
+
+os.environ["KERAS_BACKEND"] = "jax"  
+# Avoid memory fragmentation on JAX backend.
+os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"]="1.00"
+
+import os
+
+# Set Kaggle API credentials
+os.environ["KAGGLE_USERNAME"] = "rogerkorantenng"
+os.environ["KAGGLE_KEY"] = "9a33b6e88bcb6058b1281d777fa6808d"
+
+# Load environment variables
+load_dotenv()
+
+# Replace this with the path or method to load your local model
+gemma_lm = keras_nlp.models.GemmaCausalLM.from_preset("gemma_2b_en")
+
+def generate_response(message, history):
+    # Format the conversation history for the local model
+    formatted_history = []
+    for user, assistant in history:
+        formatted_history.append(f"Instruction:\n{user}\n\nResponse:\n{assistant}")
+
+    # Add the latest user message to the history
+    formatted_history.append(f"Instruction:\n{message}\n\nResponse:\n")
+
+    # Join formatted history into a single string for input
+    input_text = "\n".join(formatted_history)
+
+    # Generate response from the local model
+    # Make sure to adjust this part according to your model's API
+    response = gemma_lm.generate(input_text, max_length=256)
+    
+    # Extract the response text
+    # Adjust the response extraction based on the actual structure of your model's output
+    return response[0]  # Change this line if necessary
+
+# Create the Gradio interface
+gr.ChatInterface(
+    generate_response,
+    chatbot=gr.Chatbot(height=300),
+    textbox=gr.Textbox(placeholder="You can ask me anything", container=False, scale=7),
+    title="Local Model Chat Bot",
+    retry_btn=None,
+    undo_btn="Delete Previous",
+    clear_btn="Clear"
+).launch(share=True)
